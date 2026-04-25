@@ -61,7 +61,7 @@ const AuthPage = () => {
               StuRAN
             </span>
           </div>
-          <p className="text-gray-500 dark:text-gray-400 text-sm">Your Student Companion</p>
+          <p className="text-gray-500 dark:text-gray-400 text-sm">A Student Companion</p>
         </div>
 
         {/* Card */}
