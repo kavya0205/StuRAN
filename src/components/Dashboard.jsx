@@ -1,4 +1,4 @@
-import { FileText, Calendar, CheckCircle, Clock, X } from 'lucide-react';
+import { FileText, Calendar, CheckCircle, Clock, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
@@ -41,6 +41,7 @@ const Dashboard = () => {
   const [selectedDate, setSelectedDate] = useState(null);
   const [showProfile, setShowProfile] = useState(false);
   const [profileData, setProfileData] = useState({});
+  const [currentCalendarDate, setCurrentCalendarDate] = useState(new Date());
 
   const isToday = (timestamp) => {
     if (!timestamp) return false;
@@ -205,11 +206,19 @@ const Dashboard = () => {
 
   // Calendar data
   const todayDate = new Date();
-  const currentMonth = todayDate.getMonth();
-  const currentYear = todayDate.getFullYear();
+  const currentMonth = currentCalendarDate.getMonth();
+  const currentYear = currentCalendarDate.getFullYear();
   const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
   const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay(); // 0 = Sunday
-  const monthName = todayDate.toLocaleString('default', { month: 'long' });
+  const monthName = currentCalendarDate.toLocaleString('default', { month: 'long' });
+  
+  const handlePrevMonth = () => {
+    setCurrentCalendarDate(new Date(currentYear, currentMonth - 1, 1));
+  };
+
+  const handleNextMonth = () => {
+    setCurrentCalendarDate(new Date(currentYear, currentMonth + 1, 1));
+  };
 
   const renderCalendar = () => {
     const daysArray = [];
@@ -297,7 +306,17 @@ const Dashboard = () => {
             <div className="bg-white dark:bg-darkCard rounded-xl p-5 shadow-sm border border-gray-100 dark:border-slate-700/50">
               <div className="flex justify-between items-center mb-4 border-b border-gray-100 dark:border-slate-700/50 pb-3">
                 <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200">Calendar</h3>
-                <span className="text-xs font-bold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-slate-800 px-2 py-1 rounded-md">{monthName} {currentYear}</span>
+                <div className="flex items-center gap-2">
+                  <button onClick={handlePrevMonth} className="p-1 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-md transition-colors">
+                    <ChevronLeft className="w-4 h-4 text-gray-500" />
+                  </button>
+                  <span className="text-xs font-bold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-slate-800 px-2 py-1 rounded-md min-w-[100px] text-center">
+                    {monthName} {currentYear}
+                  </span>
+                  <button onClick={handleNextMonth} className="p-1 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-md transition-colors">
+                    <ChevronRight className="w-4 h-4 text-gray-500" />
+                  </button>
+                </div>
               </div>
               <div className="grid grid-cols-7 gap-1 text-center mb-2">
                 {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => (
@@ -362,7 +381,7 @@ const Dashboard = () => {
                       <span className="text-sm font-bold text-gray-700 dark:text-gray-200">{studyPercentage}%</span>
                     </div>
                   </div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Study Goal</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Study</p>
                 </div>
               </div>
               <div className="flex justify-around mt-2">

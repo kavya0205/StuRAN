@@ -40,8 +40,8 @@ const Exams = () => {
     const colRef = collection(db, 'users', user.uid, 'exams');
     const unsub = onSnapshot(colRef, (snap) => {
       const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      // Sort manually by createdAt desc
-      data.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+      // Sort manually by date ascending
+      data.sort((a, b) => new Date(a.date) - new Date(b.date));
       setExams(data);
     });
     return unsub;

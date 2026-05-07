@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../firebase';
 import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, getDoc, setDoc } from 'firebase/firestore';
-import { LayoutList, Plus, Trash2, Check, Clock, Calendar, ChevronDown, Edit2 } from 'lucide-react';
+import { LayoutList, Plus, Trash2, Check, Clock, Calendar, ChevronDown, Edit2, Play, Pause, Square } from 'lucide-react';
 
 const TodoList = () => {
   const { user } = useAuth();
@@ -16,6 +16,9 @@ const TodoList = () => {
   const [studyGoal, setStudyGoal] = useState(null);
   const [isGoalModalOpen, setIsGoalModalOpen] = useState(false);
   const [goalInput, setGoalInput] = useState('');
+
+  const [swRunning, setSwRunning] = useState(false);
+  const [swElapsed, setSwElapsed] = useState(0); // in seconds
 
   const isToday = (timestamp) => {
     if (!timestamp) return false;
@@ -74,6 +77,47 @@ const TodoList = () => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Stopwatch Logic
+  const handleStopStopwatch = async (finalTime) => {
+    setSwRunning(false);
+    if (finalTime === 0) return;
+    
+    let hours = +(finalTime / 3600).toFixed(2);
+    if (hours < 0.01) hours = 0.01;
+
+    try {
+      await addDoc(collection(db, 'users', user.uid, 'todos'), {
+        text: 'Study Session',
+        priority: 'Medium',
+        duration: hours,
+        completed: true,
+        completedAt: Date.now(),
+        createdAt: Date.now()
+      });
+      setSwElapsed(0);
+    } catch (err) {
+      console.error("Error saving stopwatch session:", err);
+    }
+  };
+
+  useEffect(() => {
+    let interval = null;
+    if (swRunning) {
+      interval = setInterval(() => {
+        setSwElapsed(prev => {
+          if (prev >= 3599) {
+            handleStopStopwatch(3600);
+            return 0;
+          }
+          return prev + 1;
+        });
+      }, 1000);
+    } else if (!swRunning && swElapsed !== 0) {
+      clearInterval(interval);
+    }
+    return () => clearInterval(interval);
+  }, [swRunning]);
 
   // Fetch Todos
   useEffect(() => {
@@ -173,6 +217,36 @@ const TodoList = () => {
             </button>
           </div>
         )}
+      </div>
+
+      {/* Stopwatch Section */}
+      <div className="bg-white dark:bg-darkCard rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-slate-700/50 flex flex-col md:flex-row items-center gap-6 relative z-20">
+         <div className="flex-1 w-full">
+            <div className="flex justify-between text-sm font-bold text-gray-600 dark:text-gray-300 mb-2">
+               <span>Study Stopwatch</span>
+               <span>{Math.floor(swElapsed / 60)}:{(swElapsed % 60).toString().padStart(2, '0')} / 60:00</span>
+            </div>
+            <div className="w-full h-3 bg-gray-100 dark:bg-slate-800 rounded-full overflow-hidden">
+               <div 
+                 className="h-full bg-blue-500 transition-all duration-1000 ease-linear"
+                 style={{ width: `${Math.min(100, (swElapsed / 3600) * 100)}%` }}
+               ></div>
+            </div>
+         </div>
+         <div className="flex items-center gap-3">
+            {!swRunning ? (
+              <button onClick={() => setSwRunning(true)} className="p-3 bg-blue-50 dark:bg-blue-500/10 text-blue-500 rounded-xl hover:bg-blue-100 dark:hover:bg-blue-500/20 transition-colors">
+                <Play className="w-5 h-5" />
+              </button>
+            ) : (
+              <button onClick={() => setSwRunning(false)} className="p-3 bg-orange-50 dark:bg-orange-500/10 text-orange-500 rounded-xl hover:bg-orange-100 dark:hover:bg-orange-500/20 transition-colors">
+                <Pause className="w-5 h-5" />
+              </button>
+            )}
+            <button onClick={() => handleStopStopwatch(swElapsed)} className="p-3 bg-red-50 dark:bg-red-500/10 text-red-500 rounded-xl hover:bg-red-100 dark:hover:bg-red-500/20 transition-colors">
+              <Square className="w-5 h-5" />
+            </button>
+         </div>
       </div>
 
       {/* Input Section */}
