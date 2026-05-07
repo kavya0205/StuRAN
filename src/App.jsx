@@ -12,6 +12,63 @@ import Attendance from './components/Attendance';
 import AuthPage from './components/AuthPage';
 import TodoList from './components/TodoList';
 import GroupDiscussion from './components/GroupDiscussion';
+import { collection, addDoc } from 'firebase/firestore';
+import { db } from './firebase';
+import { createContext } from 'react';
+
+export const StopwatchContext = createContext();
+
+const StopwatchProvider = ({ children }) => {
+  const { user } = useAuth();
+  const [swRunning, setSwRunning] = useState(false);
+  const [swElapsed, setSwElapsed] = useState(0);
+
+  const handleStopStopwatch = async (finalTime) => {
+    setSwRunning(false);
+    if (!user || finalTime === 0) return;
+    
+    let hours = +(finalTime / 3600).toFixed(2);
+    if (hours < 0.01) hours = 0.01;
+
+    try {
+      await addDoc(collection(db, 'users', user.uid, 'todos'), {
+        text: 'Study Session',
+        priority: 'Medium',
+        duration: hours,
+        completed: true,
+        completedAt: Date.now(),
+        createdAt: Date.now()
+      });
+      setSwElapsed(0);
+    } catch (err) {
+      console.error("Error saving stopwatch session:", err);
+    }
+  };
+
+  useEffect(() => {
+    let interval = null;
+    if (swRunning) {
+      interval = setInterval(() => {
+        setSwElapsed(prev => {
+          if (prev >= 3599) {
+            handleStopStopwatch(3600);
+            return 0;
+          }
+          return prev + 1;
+        });
+      }, 1000);
+    } else if (!swRunning && swElapsed !== 0) {
+      clearInterval(interval);
+    }
+    return () => clearInterval(interval);
+  }, [swRunning]);
+
+  return (
+    <StopwatchContext.Provider value={{ swRunning, setSwRunning, swElapsed, handleStopStopwatch }}>
+      {children}
+    </StopwatchContext.Provider>
+  );
+};
 
 // Inner app — only rendered when authenticated
 const AppShell = () => {
@@ -79,11 +136,17 @@ const AppShell = () => {
   );
 };
 
+const AppShellWithStopwatch = () => (
+  <StopwatchProvider>
+    <AppShell />
+  </StopwatchProvider>
+);
+
 function App() {
   return (
     <Router>
       <AuthProvider>
-        <AppShell />
+        <AppShellWithStopwatch />
       </AuthProvider>
     </Router>
   );

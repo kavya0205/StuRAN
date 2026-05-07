@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { StopwatchContext } from '../App';
 import { db } from '../firebase';
 import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, getDoc, setDoc } from 'firebase/firestore';
 import { LayoutList, Plus, Trash2, Check, Clock, Calendar, ChevronDown, Edit2, Play, Pause, Square } from 'lucide-react';
@@ -17,8 +18,7 @@ const TodoList = () => {
   const [isGoalModalOpen, setIsGoalModalOpen] = useState(false);
   const [goalInput, setGoalInput] = useState('');
 
-  const [swRunning, setSwRunning] = useState(false);
-  const [swElapsed, setSwElapsed] = useState(0); // in seconds
+  const { swRunning, setSwRunning, swElapsed, handleStopStopwatch } = useContext(StopwatchContext);
 
   const isToday = (timestamp) => {
     if (!timestamp) return false;
@@ -77,47 +77,6 @@ const TodoList = () => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-
-  // Stopwatch Logic
-  const handleStopStopwatch = async (finalTime) => {
-    setSwRunning(false);
-    if (finalTime === 0) return;
-    
-    let hours = +(finalTime / 3600).toFixed(2);
-    if (hours < 0.01) hours = 0.01;
-
-    try {
-      await addDoc(collection(db, 'users', user.uid, 'todos'), {
-        text: 'Study Session',
-        priority: 'Medium',
-        duration: hours,
-        completed: true,
-        completedAt: Date.now(),
-        createdAt: Date.now()
-      });
-      setSwElapsed(0);
-    } catch (err) {
-      console.error("Error saving stopwatch session:", err);
-    }
-  };
-
-  useEffect(() => {
-    let interval = null;
-    if (swRunning) {
-      interval = setInterval(() => {
-        setSwElapsed(prev => {
-          if (prev >= 3599) {
-            handleStopStopwatch(3600);
-            return 0;
-          }
-          return prev + 1;
-        });
-      }, 1000);
-    } else if (!swRunning && swElapsed !== 0) {
-      clearInterval(interval);
-    }
-    return () => clearInterval(interval);
-  }, [swRunning]);
 
   // Fetch Todos
   useEffect(() => {
