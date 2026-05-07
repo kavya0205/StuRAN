@@ -45,14 +45,30 @@ const StopwatchProvider = ({ children }) => {
     }
   };
 
+  const handleAutoSave = async () => {
+    if (!user) return;
+    try {
+      await addDoc(collection(db, 'users', user.uid, 'todos'), {
+        text: 'Study Session',
+        priority: 'Medium',
+        duration: 1,
+        completed: true,
+        completedAt: Date.now(),
+        createdAt: Date.now()
+      });
+    } catch (err) {
+      console.error("Error auto-saving stopwatch session:", err);
+    }
+  };
+
   useEffect(() => {
     let interval = null;
     if (swRunning) {
       interval = setInterval(() => {
         setSwElapsed(prev => {
           if (prev >= 3599) {
-            handleStopStopwatch(3600);
-            return 0;
+            handleAutoSave();
+            return 0; // restarts to 0 without stopping swRunning
           }
           return prev + 1;
         });
@@ -61,7 +77,7 @@ const StopwatchProvider = ({ children }) => {
       clearInterval(interval);
     }
     return () => clearInterval(interval);
-  }, [swRunning]);
+  }, [swRunning, user]);
 
   return (
     <StopwatchContext.Provider value={{ swRunning, setSwRunning, swElapsed, handleStopStopwatch }}>
