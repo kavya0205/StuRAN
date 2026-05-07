@@ -728,7 +728,11 @@ const Dashboard = () => {
                           </div>
                           <div className="flex items-center gap-2 bg-purple-50 dark:bg-purple-500/10 px-3 py-1.5 rounded-lg border border-purple-100 dark:border-purple-500/20 shrink-0">
                             <Clock className="w-4 h-4 text-purple-500" />
-                            <span className="font-bold text-purple-600 dark:text-purple-400">{t.duration || 0} hrs</span>
+                            <span className="font-bold text-purple-600 dark:text-purple-400">
+                              {t.duration && t.duration < 1 
+                                ? `${Math.round(t.duration * 60)} mins` 
+                                : `${t.duration || 0} hrs`}
+                            </span>
                           </div>
                         </div>
                       ))}

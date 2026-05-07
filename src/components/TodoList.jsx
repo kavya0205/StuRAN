@@ -307,7 +307,7 @@ const TodoList = () => {
                       </span>
                       {todo.duration && (
                         <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full border border-orange-200 dark:border-orange-900/50 text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 flex items-center gap-1">
-                          <Clock className="w-3 h-3" /> {todo.duration} hrs
+                          <Clock className="w-3 h-3" /> {todo.duration < 1 ? `${Math.round(todo.duration * 60)} mins` : `${todo.duration} hrs`}
                         </span>
                       )}
                     </div>
